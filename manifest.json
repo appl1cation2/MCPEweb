@@ -1,5 +1,5 @@
 {
-    "name": "Minecraft PE Web",
+    "name": "Minecraft Web",
     "short_name": "Minecraft",
     "description": "Minecraft in the browser, powered by Emscripten",
     "start_url": "./index.html",
