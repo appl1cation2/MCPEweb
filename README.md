@@ -1,8 +1,10 @@
 # Minecraft Pocket Edition 0.6.1 Alpha (Web Assembly / emscripten / WASM port)
 
-Fully playable Minecraft PE 0.6.1 alpha in the browser with full multi-touch support, keyboard and mouse inputs, offline PWA support, and local storage map saves & Audio.
+Testing some MCPE 0.6.1
 
-[**PLAY NOW**](https://sangraphic.github.io/MCPEweb/)
+Try if you want!
+
+[**Play Now**](https://appl1cation2.github.io/MCPEweb/)
 
 
 ## Build
