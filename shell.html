@@ -11,8 +11,8 @@
         html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 150%;
+            width: 125%;
+            height: 100%;
             overflow: hidden;
             background-color: black;
             display: flex;
@@ -65,7 +65,7 @@
             // This also prevents the browser from synthesizing native 'mousedown' events from touches
             canvas.addEventListener('touchstart', function (e) {
                 e.preventDefault();
-            }, { passive: true });
+            }, { passive: false });
 
             // Block document-level default touch behaviours (scroll / zoom),
             // but only for non-input elements (the existing rule).
@@ -74,7 +74,7 @@
                 if (t !== 'INPUT' && t !== 'TEXTAREA' && t !== 'BUTTON' && t !== 'SELECT' && t !== 'OPTION') {
                     e.preventDefault();
                 }
-            }, { passive: true });
+            }, { passive: false});
         })();
     </script>
     <script type='text/javascript'>
