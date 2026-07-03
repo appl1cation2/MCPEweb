@@ -30,10 +30,34 @@
             width: 100vw;
             height: 100vh;
         }
+
+        #fullscreen-button {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            width: 44px;
+            height: 44px;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.45);
+            color: white;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        #fullscreen-button:hover,
+        #fullscreen-button:focus {
+            background: rgba(0, 0, 0, 0.7);
+            outline: none;
+        }
     </style>
 </head>
 
 <body>
+    <button id="fullscreen-button" type="button" aria-label="Enter fullscreen" title="Fullscreen">⛶</button>
     <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
     <script type='text/javascript'>
@@ -52,6 +76,47 @@
 
         (function () {
             var canvas = document.getElementById('canvas');
+            var fullscreenButton = document.getElementById('fullscreen-button');
+
+            function fullscreenElement() {
+                return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            }
+
+            function requestFullscreen(element) {
+                var request = element.requestFullscreen || element.webkitRequestFullscreen || element.msRequestFullscreen;
+                if (request) {
+                    request.call(element);
+                }
+            }
+
+            function exitFullscreen() {
+                var exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+                if (exit) {
+                    exit.call(document);
+                }
+            }
+
+            function updateFullscreenButton() {
+                var isFullscreen = !!fullscreenElement();
+                fullscreenButton.setAttribute('aria-label', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+                fullscreenButton.title = isFullscreen ? 'Exit fullscreen' : 'Fullscreen';
+            }
+
+            fullscreenButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (fullscreenElement()) {
+                    exitFullscreen();
+                } else {
+                    requestFullscreen(document.documentElement);
+                }
+            });
+
+            document.addEventListener('fullscreenchange', updateFullscreenButton);
+            document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+            document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+            updateFullscreenButton();
 
             // Handle Native Mouse Clicks to lock pointer only for REAL mice
             canvas.addEventListener('mousedown', function (e) {
