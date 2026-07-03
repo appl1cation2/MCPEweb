@@ -1,6 +1,8 @@
 # Minecraft Pocket Edition 0.6.1 Alpha (Web Assembly / emscripten / WASM port)
 
-Testing some MCPE 0.6.1
+Testing some MCPE 0.6.1 :)
+
+all credits goes to sangraphic and mojang!
 
 Try if you want!
 
