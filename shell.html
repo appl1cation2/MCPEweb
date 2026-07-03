@@ -49,76 +49,15 @@
         }
 
         #fullscreen-button:hover,
-        #fullscreen-button:focus,
-        #tv-mode-toggle:hover,
-        #tv-mode-toggle:focus,
-        .tv-look-button:hover,
-        .tv-look-button:focus {
+        #fullscreen-button:focus {
             background: rgba(0, 0, 0, 0.7);
             outline: none;
-        }
-
-        #tv-mode-toggle {
-            position: fixed;
-            top: 12px;
-            left: 68px;
-            z-index: 10;
-            min-width: 92px;
-            height: 44px;
-            border: 2px solid rgba(255, 255, 255, 0.85);
-            border-radius: 6px;
-            background: rgba(0, 0, 0, 0.45);
-            color: white;
-            font-size: 15px;
-            font-family: monospace;
-            line-height: 1;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-
-        #tv-mode-toggle[aria-pressed="true"] {
-            background: rgba(48, 120, 48, 0.75);
-        }
-
-        #tv-look-controls {
-            position: fixed;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: none;
-            gap: 8px;
-            touch-action: manipulation;
-        }
-
-        body.tv-mode-enabled #tv-look-controls {
-            display: flex;
-        }
-
-        .tv-look-button {
-            width: 44px;
-            height: 44px;
-            border: 2px solid rgba(255, 255, 255, 0.85);
-            border-radius: 6px;
-            background: rgba(0, 0, 0, 0.45);
-            color: white;
-            font-size: 22px;
-            line-height: 1;
-            cursor: pointer;
-            touch-action: manipulation;
         }
     </style>
 </head>
 
 <body>
     <button id="fullscreen-button" type="button" aria-label="Enter fullscreen" title="Fullscreen">⛶</button>
-    <button id="tv-mode-toggle" type="button" aria-pressed="false" title="Toggle TV mode controls">TV mode: Off</button>
-    <div id="tv-look-controls" aria-label="TV mode look controls">
-        <button class="tv-look-button" type="button" data-look-x="0" data-look-y="-15" aria-label="Look up 15 degrees">↑</button>
-        <button class="tv-look-button" type="button" data-look-x="0" data-look-y="15" aria-label="Look down 15 degrees">↓</button>
-        <button class="tv-look-button" type="button" data-look-x="-15" data-look-y="0" aria-label="Look left 15 degrees">←</button>
-        <button class="tv-look-button" type="button" data-look-x="15" data-look-y="0" aria-label="Look right 15 degrees">→</button>
-    </div>
     <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
     <script type='text/javascript'>
@@ -138,40 +77,6 @@
         (function () {
             var canvas = document.getElementById('canvas');
             var fullscreenButton = document.getElementById('fullscreen-button');
-            var tvModeToggle = document.getElementById('tv-mode-toggle');
-            var tvLookControls = document.getElementById('tv-look-controls');
-            var tvModeEnabled = localStorage.getItem('mcTvMode') === 'true';
-            var lastTvTouchY = null;
-
-            function setTvMode(enabled) {
-                tvModeEnabled = enabled;
-                localStorage.setItem('mcTvMode', enabled ? 'true' : 'false');
-                document.body.classList.toggle('tv-mode-enabled', enabled);
-                tvModeToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-                tvModeToggle.textContent = enabled ? 'TV mode: On' : 'TV mode: Off';
-            }
-
-            function dispatchCanvasMouseMove(deltaX, deltaY) {
-                var rect = canvas.getBoundingClientRect();
-                var event = new MouseEvent('mousemove', {
-                    bubbles: true,
-                    cancelable: true,
-                    clientX: rect.left + rect.width / 2 + deltaX,
-                    clientY: rect.top + rect.height / 2 + deltaY
-                });
-                Object.defineProperty(event, 'movementX', { value: deltaX });
-                Object.defineProperty(event, 'movementY', { value: deltaY });
-                canvas.dispatchEvent(event);
-            }
-
-            function dispatchCanvasWheel(deltaY) {
-                canvas.dispatchEvent(new WheelEvent('wheel', {
-                    bubbles: true,
-                    cancelable: true,
-                    deltaMode: WheelEvent.DOM_DELTA_PIXEL,
-                    deltaY: deltaY
-                }));
-            }
 
             function fullscreenElement() {
                 return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
@@ -212,23 +117,6 @@
             document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
             document.addEventListener('MSFullscreenChange', updateFullscreenButton);
             updateFullscreenButton();
-            setTvMode(tvModeEnabled);
-
-            tvModeToggle.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                setTvMode(!tvModeEnabled);
-            });
-
-            tvLookControls.addEventListener('click', function (e) {
-                var button = e.target.closest('button[data-look-x][data-look-y]');
-                if (!button) return;
-                e.preventDefault();
-                e.stopPropagation();
-                var degreesToPixels = 8;
-                dispatchCanvasMouseMove(Number(button.dataset.lookX) * degreesToPixels, Number(button.dataset.lookY) * degreesToPixels);
-                canvas.focus();
-            });
 
             // Handle Native Mouse Clicks to lock pointer only for REAL mice
             canvas.addEventListener('mousedown', function (e) {
@@ -241,26 +129,7 @@
             // Prevent default touch behaviors on the canvas (like scrolling, double-tap zoom)
             // This also prevents the browser from synthesizing native 'mousedown' events from touches
             canvas.addEventListener('touchstart', function (e) {
-                if (tvModeEnabled && e.touches.length === 1) {
-                    lastTvTouchY = e.touches[0].clientY;
-                }
                 e.preventDefault();
-            }, { passive: false });
-
-            canvas.addEventListener('touchmove', function (e) {
-                if (tvModeEnabled && e.touches.length === 1 && lastTvTouchY !== null) {
-                    var nextY = e.touches[0].clientY;
-                    var deltaY = lastTvTouchY - nextY;
-                    if (Math.abs(deltaY) > 2) {
-                        dispatchCanvasWheel(deltaY * 2);
-                        lastTvTouchY = nextY;
-                    }
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
-            canvas.addEventListener('touchend', function () {
-                lastTvTouchY = null;
             }, { passive: false });
 
             // Block document-level default touch behaviours (scroll / zoom),
