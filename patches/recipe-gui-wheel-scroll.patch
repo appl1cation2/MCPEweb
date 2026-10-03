@@ -1,0 +1,99 @@
+--- a/src/client/gui/Screen.h
++++ b/src/client/gui/Screen.h
+@@ -27,6 +27,7 @@
+ 
+ 	virtual void updateEvents();
+     virtual void mouseEvent();
++    virtual void mouseScrolled(int x, int y, int delta) {}
+     virtual void keyboardEvent();
+ 	virtual void keyboardTextEvent();
+ 	virtual bool handleBackEvent(bool isDown);
+--- a/src/client/gui/Screen.cpp
++++ b/src/client/gui/Screen.cpp
+@@ -72,16 +72,20 @@
+ void Screen::mouseEvent()
+ {
+ 	const MouseAction& e = Mouse::getEvent();
++	int xm = e.x * width / minecraft->width;
++	int ym = e.y * height / minecraft->height - 1;
++
++	if (e.action == MouseAction::ACTION_WHEEL) {
++		mouseScrolled(xm, ym, e.dy);
++		return;
++	}
++
+ 	if (!e.isButton())
+ 		return;
+ 
+ 	if (Mouse::getEventButtonState()) {
+-		int xm = e.x * width / minecraft->width;
+-		int ym = e.y * height / minecraft->height - 1;
+ 		mouseClicked(xm, ym, Mouse::getEventButton());
+ 	} else {
+-		int xm = e.x * width / minecraft->width;
+-		int ym = e.y * height / minecraft->height - 1;
+ 		mouseReleased(xm, ym, Mouse::getEventButton());
+ 	}
+ }
+--- a/src/client/gui/components/ScrollingPane.h
++++ b/src/client/gui/components/ScrollingPane.h
+@@ -54,6 +54,7 @@
+ 	bool getGridItemFor_slow(int itemIndex, GridItem& out);
+ 
+ 	void setSelected(int id, bool selected);
++	bool scrollWheel(int x, int y, int delta);
+ 
+ 	// This function is called with all visible GridItems. The base
+ 	// implementation just dispatches each item to renderItem in y,x order
+--- a/src/client/gui/components/ScrollingPane.cpp
++++ b/src/client/gui/components/ScrollingPane.cpp
+@@ -190,6 +190,24 @@
+ 	//	glDisable2(GL_SCISSOR_TEST);
+ }
+ 
++bool ScrollingPane::scrollWheel(int x, int y, int delta) {
++	if (delta == 0 || !bboxArea.isInside((float)x, (float)y))
++		return false;
++
++	adjustContentSize();
++	const float minimumY = Mth::Min(0.0f, (float)(size.h - adjustedContentSize.h));
++	if (minimumY == 0.0f)
++		return false;
++
++	stopDecelerationAnimation();
++	const float wheelStep = (float)itemBbox.h;
++	const float yOffset = Mth::Min(0.0f, Mth::Max(minimumY,
++		_contentOffset.y + delta * wheelStep));
++	setContentOffset(_contentOffset.x, yOffset);
++	vScroll.fading = 1;
++	return true;
++}
++
+ void ScrollingPane::renderBatch(std::vector<GridItem>& items, float alpha) {
+ 	for (unsigned int i = 0; i < items.size(); ++i)
+ 		renderItem(items[i], alpha);
+--- a/src/client/gui/screens/crafting/PaneCraftingScreen.h
++++ b/src/client/gui/screens/crafting/PaneCraftingScreen.h
+@@ -51,6 +51,7 @@
+     bool closeOnPlayerHurt();
+ 	void buttonClicked(Button* button);
+ 	void keyPressed( int eventKey );
++	void mouseScrolled(int x, int y, int delta);
+ 
+ 	// IItemPaneCallback
+ 	void onItemSelected(const ItemPane* forPane, int itemIndexInCurrentCategory);
+--- a/src/client/gui/screens/crafting/PaneCraftingScreen.cpp
++++ b/src/client/gui/screens/crafting/PaneCraftingScreen.cpp
+@@ -418,6 +418,12 @@
+ 	currentCategoryButtons.clear();
+ }
+ 
++void PaneCraftingScreen::mouseScrolled(int x, int y, int delta)
++{
++	if (pane)
++		pane->scrollWheel(x, y, delta);
++}
++
+ void PaneCraftingScreen::keyPressed( int eventKey )
+ {
+ 	if (eventKey == Keyboard::KEY_ESCAPE) {

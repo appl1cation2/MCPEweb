@@ -15,3 +15,13 @@ Try if you want!
 2. Build: `.\build.ps1`
 
 Output: `project/emscripten/index.html`, `index.js`, `index.wasm`. Serve that folder to run.
+
+### Source overrides
+
+The original full source distribution is retained in `web-build.zip`. Readable source
+changes are kept as patches in `patches/` so they can be reviewed normally. After
+extracting the archive, apply them before building:
+
+```sh
+python3 scripts/apply-source-overrides.py /path/to/web-build
+```
